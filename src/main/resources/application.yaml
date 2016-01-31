@@ -1,0 +1,8 @@
+server:
+  contextPath: /vitalsport/photos
+  port: 8081
+vitalsport:
+  secretKey: verySecretKey
+multipart:
+  maxFileSize: 1024KB
+  maxRequestSize: 1024KB

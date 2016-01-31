@@ -1,4 +1,5 @@
 # vitalsport-photos
+http://localhost:8081/vitalsport/photos/swagger-ui.html
 
 #1 Think of overall architecture.
 - How image will be deployed to server?
