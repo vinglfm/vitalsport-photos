@@ -18,11 +18,12 @@ public class PhotoService implements FileLoader {
     private String album;
 
     @Override
-    public boolean loadFile(String userId, String fileName, MultipartFile file) {
+    public boolean loadFile(String userId, String fileName, MultipartFile multipartFile) {
+        File imageFile = prepareFile(userId, fileName);
         try (OutputStream fileStream = new BufferedOutputStream(
                 new FileOutputStream(
-                        prepareFile(userId, fileName)))) {
-            fileStream.write(file.getBytes());
+                        imageFile))) {
+            fileStream.write(multipartFile.getBytes());
             log.info("File {} has been successfully uploaded", fileName);
             return true;
         } catch (IOException e) {

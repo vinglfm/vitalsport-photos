@@ -22,8 +22,8 @@ public class PhotoController {
     private PhotoService photoService;
 
     //TODO: add meta data like album name
-    @RequestMapping(value = "/{userId}/upload/{fileName}", method = POST)
-    public ResponseEntity<String> uploadPhoto(@PathVariable String userId, @PathVariable String fileName,
+    @RequestMapping(value = "/{userId}/upload", method = POST)
+    public ResponseEntity<String> uploadPhoto(@PathVariable String userId, @RequestParam String fileName,
                                               @RequestParam(value = "file") MultipartFile file) {
         log.debug("User: {} uploading photo: {}", userId, fileName);
 
