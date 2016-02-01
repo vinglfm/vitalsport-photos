@@ -1,17 +1,23 @@
 package com.vitalsport.photos.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.ServletContext;
 import java.io.*;
+import java.net.URI;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 @Slf4j
 @Service
@@ -36,22 +42,32 @@ public class PhotoService implements PhotoLoader {
 
     @Override
     public Collection<String> getUserAlbums(String userId) {
+        return getUserData(Paths.get(prepareUserPath(userId)),
+                (path) -> path.getFileName().toString());
+    }
 
-        Collection<String> albums = new ArrayList<>();
+    @Override
+    public Collection<String> getUserPhotos(String userId, String album) {
+        return getUserData(Paths.get(prepareUserPath(userId, album)),
+                (path) -> path.toString());
+    }
 
-        Path userFolder = Paths.get(prepareUserPath(userId));
+    private Collection<String> getUserData(Path userFolder, Function<Path, String> dataFunction) {
+        Collection<String> photos = new ArrayList<>();
+
         if(Files.exists(userFolder)) {
             try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(userFolder)) {
                 for (Path path : directoryStream) {
-                    albums.add(path.getFileName().toString());
+                    photos.add(dataFunction.apply(path));
                 }
             } catch (IOException exception) {
                 throw new InternalError(exception);
             }
         }
 
-        return albums;
+        return photos;
     }
+
 
     private File createFile(String userId, String album, String fileName) {
         File file = new File(prepareFilePath(userId, album, fileName));
@@ -73,7 +89,14 @@ public class PhotoService implements PhotoLoader {
     private String prepareUserPath(String userId) {
         StringBuilder pathBuilder = new StringBuilder(path);
         pathBuilder.append(userId);
+        return pathBuilder.toString();
+    }
+
+    private String prepareUserPath(String userId, String album) {
+        StringBuilder pathBuilder = new StringBuilder(path);
+        pathBuilder.append(userId);
         pathBuilder.append('/');
+        pathBuilder.append(album);
         return pathBuilder.toString();
     }
 

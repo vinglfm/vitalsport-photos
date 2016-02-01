@@ -44,4 +44,11 @@ public class PhotoController {
         return ok(photoService.getUserAlbums(userId));
     }
 
+    @RequestMapping(value = "/{userId}/{album}", method = GET)
+    public ResponseEntity<?> getPhotos(@PathVariable String userId, @PathVariable String album) {
+        log.info("Retrieving info about photo for user: {}, album: {}", userId, album);
+
+        return ok(photoService.getUserPhotos(userId, album));
+    }
+
 }
