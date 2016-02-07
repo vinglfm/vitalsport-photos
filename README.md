@@ -2,4 +2,4 @@
 http://localhost:8081/vitalsport/photos/swagger-ui.html
 
 TODO:
-#1 Provide a way to retrieve data via http request
+#1 Introduce user authentication via sql+redis solution
