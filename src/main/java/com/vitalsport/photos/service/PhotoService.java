@@ -1,22 +1,20 @@
 package com.vitalsport.photos.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.ServletContext;
 import java.io.*;
-import java.net.URI;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 @Slf4j
@@ -26,8 +24,11 @@ public class PhotoService implements PhotoLoader {
     @Value("${photos.path}")
     private String path;
 
+    @Autowired
+    private ResourceLoader resourceLoader;
+
     @Override
-    public boolean loadPhoto(String userId, String album, String fileName, MultipartFile multipartFile) {
+    public boolean uploadPhoto(String userId, String album, String fileName, MultipartFile multipartFile) {
         File imageFile = createFile(userId, album, fileName);
         try (OutputStream fileStream = new BufferedOutputStream(
                 new FileOutputStream(
@@ -35,8 +36,15 @@ public class PhotoService implements PhotoLoader {
             fileStream.write(multipartFile.getBytes());
             log.info("File {} has been successfully uploaded", fileName);
             return true;
-        } catch (IOException e) {
+        } catch (IOException exception) {
             return false;
+        }
+    }
+
+    @Override
+    public byte[] downloadPhoto(String userId, String album, String fileName) throws IOException {
+        try(InputStream input = new FileInputStream(new File(prepareFilePath(userId, album, fileName)))) {
+            return IOUtils.toByteArray(input);
         }
     }
 
@@ -55,7 +63,7 @@ public class PhotoService implements PhotoLoader {
     private Collection<String> getUserData(Path userFolder, Function<Path, String> dataFunction) {
         Collection<String> photos = new ArrayList<>();
 
-        if(Files.exists(userFolder)) {
+        if (Files.exists(userFolder)) {
             try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(userFolder)) {
                 for (Path path : directoryStream) {
                     photos.add(dataFunction.apply(path));

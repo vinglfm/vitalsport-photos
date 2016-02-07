@@ -2,10 +2,13 @@ package com.vitalsport.photos.service;
 
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.Collection;
 
 public interface PhotoLoader {
-    boolean loadPhoto(String userId, String album, String fileName, MultipartFile file);
+    boolean uploadPhoto(String userId, String album, String fileName, MultipartFile file);
+
+    byte[] downloadPhoto(String userId, String album, String fileName) throws IOException;
 
     Collection<String> getUserAlbums(String userId);
 
