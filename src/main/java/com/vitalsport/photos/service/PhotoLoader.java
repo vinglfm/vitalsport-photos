@@ -6,9 +6,9 @@ import java.io.IOException;
 import java.util.Collection;
 
 public interface PhotoLoader {
-    boolean uploadPhoto(String userId, String album, String fileName, MultipartFile file);
+    boolean uploadImage(String userId, String album, String fileName, MultipartFile file);
 
-    byte[] downloadPhoto(String userId, String album, String fileName) throws IOException;
+    byte[] downloadImage(String userId, String album, String fileName) throws IOException;
 
     Collection<String> getUserAlbums(String userId);
 

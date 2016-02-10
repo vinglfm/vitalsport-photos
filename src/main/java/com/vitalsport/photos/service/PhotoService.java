@@ -1,5 +1,6 @@
 package com.vitalsport.photos.service;
 
+import com.vitalsport.photos.validator.UploadValidator;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,13 +10,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.function.Function;
+
+import static java.lang.String.format;
 
 @Slf4j
 @Service
@@ -25,10 +25,13 @@ public class PhotoService implements PhotoLoader {
     private String path;
 
     @Autowired
-    private ResourceLoader resourceLoader;
+    private UploadValidator<MultipartFile> uploadValidator;
 
     @Override
-    public boolean uploadPhoto(String userId, String album, String fileName, MultipartFile multipartFile) {
+    public boolean uploadImage(String userId, String album, String fileName, MultipartFile multipartFile) {
+
+        uploadValidator.validate(multipartFile);
+
         File imageFile = createFile(userId, album, fileName);
         try (OutputStream fileStream = new BufferedOutputStream(
                 new FileOutputStream(
@@ -42,9 +45,13 @@ public class PhotoService implements PhotoLoader {
     }
 
     @Override
-    public byte[] downloadPhoto(String userId, String album, String fileName) throws IOException {
-        try(InputStream input = new FileInputStream(new File(prepareFilePath(userId, album, fileName)))) {
+    public byte[] downloadImage(String userId, String album, String image) throws IOException {
+        try (InputStream input = new FileInputStream(new File(prepareFilePath(userId, album, image)))) {
             return IOUtils.toByteArray(input);
+        } catch (FileNotFoundException exception) {
+            throw new IllegalArgumentException(format("Image: %s wasn't found in album: %s for user: %s", image, album, userId), exception);
+        } catch (IOException exception) {
+            throw new InternalError(exception);
         }
     }
 
