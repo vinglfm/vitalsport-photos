@@ -40,7 +40,7 @@ public class PhotoService implements PhotoLoader {
             log.info("File {} has been successfully uploaded", fileName);
             return true;
         } catch (IOException exception) {
-            return false;
+            throw new InternalError(exception);
         }
     }
 

@@ -63,6 +63,7 @@ public class PhotoController {
 
         byte[] imageBytes = photoService.downloadImage(userId, album, image);
         HttpHeaders httpHeaders = new HttpHeaders();
+        //TODO: add correct content type
         httpHeaders.setContentType(MediaType.IMAGE_PNG);
 
         return new ResponseEntity<>(imageBytes, httpHeaders, HttpStatus.OK);
