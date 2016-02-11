@@ -18,13 +18,16 @@ public class ExceptionControllerAdvice {
     @ResponseStatus(BAD_REQUEST)
     @ExceptionHandler(IllegalArgumentException.class)
     public VndErrors.VndError illegalArgumentExceptionHandler(IllegalArgumentException exception) {
-        String message = Optional.of(exception.getMessage()).orElse(exception.getClass().getSimpleName());
-        return new VndErrors.VndError(exception.getLocalizedMessage(), message);
+        return prepareVndError(exception);
     }
 
     @ResponseStatus(INTERNAL_SERVER_ERROR)
     @ExceptionHandler(InternalError.class)
     public VndErrors.VndError internalError(InternalError exception) {
+        return prepareVndError(exception);
+    }
+
+    private VndErrors.VndError prepareVndError(Throwable exception) {
         String message = Optional.of(exception.getCause().getMessage()).orElse(exception.getClass().getSimpleName());
         return new VndErrors.VndError(exception.getLocalizedMessage(), message);
     }

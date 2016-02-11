@@ -14,6 +14,7 @@ public class MultipartFileUploadValidator implements UploadValidator<MultipartFi
     }
 
     private void validateContentType(MultipartFile multipartFile) {
+        //TODO: possibly use other way to find out a content type
         String contentType = multipartFile.getContentType();
         if(!contentType.startsWith("image")) {
             throw new IllegalArgumentException(String.format("ContentType: %s is not supported.", contentType));

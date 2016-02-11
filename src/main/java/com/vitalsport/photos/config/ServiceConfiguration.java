@@ -6,8 +6,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.core.io.ClassPathResource;
 
+import javax.activation.MimetypesFileTypeMap;
+
 @Configuration
-public class ResourceConfiguration {
+public class ServiceConfiguration {
 
     @Bean
     public static PropertySourcesPlaceholderConfigurer properties() {

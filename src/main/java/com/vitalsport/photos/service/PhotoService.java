@@ -1,15 +1,18 @@
 package com.vitalsport.photos.service;
 
+import com.vitalsport.photos.model.ImageHolder;
 import com.vitalsport.photos.validator.UploadValidator;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ResourceLoader;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.activation.MimetypesFileTypeMap;
 import java.io.*;
+import java.net.URLConnection;
 import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -21,14 +24,18 @@ import static java.lang.String.format;
 @Service
 public class PhotoService implements PhotoLoader {
 
-    @Value("${photos.path}")
     private String path;
 
-    @Autowired
     private UploadValidator<MultipartFile> uploadValidator;
 
+    @Autowired
+    public PhotoService(@Value("${photos.path}") String path, UploadValidator<MultipartFile> uploadValidator) {
+        this.path = path;
+        this.uploadValidator = uploadValidator;
+    }
+
     @Override
-    public boolean uploadImage(String userId, String album, String fileName, MultipartFile multipartFile) {
+    public void uploadImage(String userId, String album, String fileName, MultipartFile multipartFile) {
 
         uploadValidator.validate(multipartFile);
 
@@ -38,21 +45,25 @@ public class PhotoService implements PhotoLoader {
                         imageFile))) {
             fileStream.write(multipartFile.getBytes());
             log.info("File {} has been successfully uploaded", fileName);
-            return true;
         } catch (IOException exception) {
             throw new InternalError(exception);
         }
     }
 
     @Override
-    public byte[] downloadImage(String userId, String album, String image) throws IOException {
-        try (InputStream input = new FileInputStream(new File(prepareFilePath(userId, album, image)))) {
-            return IOUtils.toByteArray(input);
+    public ImageHolder downloadImage(String userId, String album, String image) throws IOException {
+        File file = new File(prepareFilePath(userId, album, image));
+        try (InputStream input = new FileInputStream(file)) {
+            return new ImageHolder(getMimeType(file), IOUtils.toByteArray(input));
         } catch (FileNotFoundException exception) {
             throw new IllegalArgumentException(format("Image: %s wasn't found in album: %s for user: %s", image, album, userId), exception);
         } catch (IOException exception) {
             throw new InternalError(exception);
         }
+    }
+
+    private MediaType getMimeType(File file) throws IOException {
+        return MediaType.valueOf(URLConnection.guessContentTypeFromName(file.getName()));
     }
 
     @Override
