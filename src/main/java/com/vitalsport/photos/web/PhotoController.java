@@ -15,7 +15,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.ResponseEntity.*;
+import static org.springframework.web.bind.annotation.RequestMethod.DELETE;
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
@@ -30,11 +32,32 @@ public class PhotoController {
     public ResponseEntity<String> uploadImage(@PathVariable String userId,
                                               @RequestParam String album,
                                               @RequestParam(value = "file") MultipartFile file) {
-        log.info("User: {} uploading photo: {}", userId, file.getOriginalFilename());
+        log.debug("User: {} uploading photo: {}", userId, file.getOriginalFilename());
 
         photoService.uploadImage(userId, album, file.getOriginalFilename(), file);
 
         return ok("Image has been downloaded successfully.");
+    }
+
+    @RequestMapping(value = "/{userId}/album", method = POST)
+    public ResponseEntity<String> createAlbum(@PathVariable String userId,
+                                              @RequestParam String album) {
+        log.debug("User: {} creating an album: {}", userId, album);
+
+        photoService.createAlbum(userId, album);
+
+        return ok("Album has been successfully created.");
+    }
+
+    @RequestMapping(value = "/{userId}/image", method = DELETE)
+    public ResponseEntity<String> deleteImage(@PathVariable String userId,
+                                              @RequestParam String album,
+                                              @RequestParam String image) {
+
+        log.debug("User: {} deleting an image: {} from album: {}", userId, image, album);
+
+        return photoService.deleteImage(userId, album, image) ? ok("Image has been successfully removed.")
+                : new ResponseEntity<>("Image has not beed removed.", INTERNAL_SERVER_ERROR);
     }
 
     //TODO: create meta-data server for clustering

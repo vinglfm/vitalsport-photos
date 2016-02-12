@@ -2,7 +2,6 @@
 http://localhost:8081/vitalsport/photos/swagger-ui.html
 
 TODO:
-# Refactor exception handling
 # Review API
 # Write tests
 # Add thumbnails creation

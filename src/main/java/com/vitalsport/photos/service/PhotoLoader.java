@@ -14,4 +14,8 @@ public interface PhotoLoader {
     Collection<String> getUserAlbums(String userId);
 
     Collection<String> getUserPhotos(String userId, String album);
+
+    void createAlbum(String userId, String album);
+
+    boolean deleteImage(String userId, String album, String image);
 }

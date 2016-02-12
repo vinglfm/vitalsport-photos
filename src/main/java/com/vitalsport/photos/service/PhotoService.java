@@ -1,7 +1,7 @@
 package com.vitalsport.photos.service;
 
 import com.vitalsport.photos.model.ImageHolder;
-import com.vitalsport.photos.validator.UploadValidator;
+import com.vitalsport.photos.validator.Validator;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,15 +10,14 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.activation.MimetypesFileTypeMap;
 import java.io.*;
-import java.net.URLConnection;
 import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.function.Function;
 
 import static java.lang.String.format;
+import static java.net.URLConnection.guessContentTypeFromName;
 
 @Slf4j
 @Service
@@ -26,55 +25,80 @@ public class PhotoService implements PhotoLoader {
 
     private String path;
 
-    private UploadValidator<MultipartFile> uploadValidator;
+    private Validator validator;
 
     @Autowired
-    public PhotoService(@Value("${photos.path}") String path, UploadValidator<MultipartFile> uploadValidator) {
+    public PhotoService(@Value("${photos.path}") String path, Validator validator) {
         this.path = path;
-        this.uploadValidator = uploadValidator;
+        this.validator = validator;
     }
 
     @Override
     public void uploadImage(String userId, String album, String fileName, MultipartFile multipartFile) {
 
-        uploadValidator.validate(multipartFile);
+        validator.validate(file -> file.isEmpty(), multipartFile, "Uploading an empty file.");
+        validator.validate(file -> !file.getContentType().startsWith("image"), multipartFile,
+                format("ContentType: %s is not supported.", multipartFile.getContentType()));
 
         File imageFile = createFile(userId, album, fileName);
         try (OutputStream fileStream = new BufferedOutputStream(
                 new FileOutputStream(
                         imageFile))) {
             fileStream.write(multipartFile.getBytes());
-            log.info("File {} has been successfully uploaded", fileName);
+
+            log.debug("File: {} has been successfully uploaded.", fileName);
         } catch (IOException exception) {
+            throw new InternalError(exception);
+        }
+    }
+
+    @Override
+    public void createAlbum(String userId, String album) {
+        try {
+            File file = new File(preparePath(userId, album));
+
+            validator.validate(f -> f.exists(), file,
+                    format("Album: %s is already exists.", album));
+
+            file.createNewFile();
+        } catch (IOException | SecurityException exception) {
             throw new InternalError(exception);
         }
     }
 
     @Override
     public ImageHolder downloadImage(String userId, String album, String image) throws IOException {
-        File file = new File(prepareFilePath(userId, album, image));
+        File file = new File(preparePath(userId, album, image));
         try (InputStream input = new FileInputStream(file)) {
             return new ImageHolder(getMimeType(file), IOUtils.toByteArray(input));
         } catch (FileNotFoundException exception) {
-            throw new IllegalArgumentException(format("Image: %s wasn't found in album: %s for user: %s", image, album, userId), exception);
+            throw new IllegalArgumentException(format("Image: %s wasn't found in album: %s for user: %s.", image, album, userId), exception);
         } catch (IOException exception) {
             throw new InternalError(exception);
         }
     }
 
+    @Override
+    public boolean deleteImage(String userId, String album, String image) {
+        File file = new File(preparePath(userId, album, image));
+        validator.validate(f -> !f.exists(), file,
+                format("Image: %s doesn't exists in album: %s.", image, album));
+        return file.delete();
+    }
+
     private MediaType getMimeType(File file) throws IOException {
-        return MediaType.valueOf(URLConnection.guessContentTypeFromName(file.getName()));
+        return MediaType.valueOf(guessContentTypeFromName(file.getName()));
     }
 
     @Override
     public Collection<String> getUserAlbums(String userId) {
-        return getUserData(Paths.get(prepareUserPath(userId)),
+        return getUserData(Paths.get(preparePath(userId)),
                 (path) -> path.getFileName().toString());
     }
 
     @Override
     public Collection<String> getUserPhotos(String userId, String album) {
-        return getUserData(Paths.get(prepareUserPath(userId, album)),
+        return getUserData(Paths.get(preparePath(userId, album)),
                 (path) -> path.toString());
     }
 
@@ -96,13 +120,13 @@ public class PhotoService implements PhotoLoader {
 
 
     private File createFile(String userId, String album, String fileName) {
-        File file = new File(prepareFilePath(userId, album, fileName));
+        File file = new File(preparePath(userId, album, fileName));
         file.getParentFile().mkdirs();
         return file;
     }
 
     //TODO: refactor path creation
-    private String prepareFilePath(String userId, String album, String fileName) {
+    private String preparePath(String userId, String album, String fileName) {
         StringBuilder pathBuilder = new StringBuilder(path);
         pathBuilder.append(userId);
         pathBuilder.append('/');
@@ -112,13 +136,13 @@ public class PhotoService implements PhotoLoader {
         return pathBuilder.toString();
     }
 
-    private String prepareUserPath(String userId) {
+    private String preparePath(String userId) {
         StringBuilder pathBuilder = new StringBuilder(path);
         pathBuilder.append(userId);
         return pathBuilder.toString();
     }
 
-    private String prepareUserPath(String userId, String album) {
+    private String preparePath(String userId, String album) {
         StringBuilder pathBuilder = new StringBuilder(path);
         pathBuilder.append(userId);
         pathBuilder.append('/');
