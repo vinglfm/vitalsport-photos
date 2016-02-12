@@ -132,7 +132,6 @@ public class PhotoService implements PhotoLoader {
         return photos;
     }
 
-
     private File createFile(String userId, String album, String fileName) {
         File file = new File(preparePath(userId, album, fileName));
         file.getParentFile().mkdirs();
