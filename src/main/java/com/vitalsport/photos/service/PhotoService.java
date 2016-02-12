@@ -3,6 +3,7 @@ package com.vitalsport.photos.service;
 import com.vitalsport.photos.model.ImageHolder;
 import com.vitalsport.photos.validator.Validator;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,12 +55,11 @@ public class PhotoService implements PhotoLoader {
 
     @Override
     public void createAlbum(String userId, String album) {
+        File file = new File(preparePath(userId, album));
+
+        validator.validate(f -> f.exists(), file,
+                format("Album: %s is already exists.", album));
         try {
-            File file = new File(preparePath(userId, album));
-
-            validator.validate(f -> f.exists(), file,
-                    format("Album: %s is already exists.", album));
-
             file.createNewFile();
         } catch (IOException | SecurityException exception) {
             throw new InternalError(exception);
@@ -79,11 +79,25 @@ public class PhotoService implements PhotoLoader {
     }
 
     @Override
-    public boolean deleteImage(String userId, String album, String image) {
+    public void deleteImage(String userId, String album, String image) {
         File file = new File(preparePath(userId, album, image));
         validator.validate(f -> !f.exists(), file,
                 format("Image: %s doesn't exists in album: %s.", image, album));
-        return file.delete();
+        if(!file.delete()) {
+            throw new InternalError(format("Unable to delete image: %s", image));
+        }
+    }
+
+    @Override
+    public void deleteAlbum(String userId, String album) {
+        File file = new File(preparePath(userId, album));
+        validator.validate(f -> f.exists(), file,
+                format("Album: %s does not exists.", album));
+        try {
+            FileUtils.deleteDirectory(file);
+        } catch (IOException exception) {
+            throw new InternalError(exception);
+        }
     }
 
     private MediaType getMimeType(File file) throws IOException {

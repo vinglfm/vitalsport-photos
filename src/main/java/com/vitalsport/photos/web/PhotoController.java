@@ -56,8 +56,20 @@ public class PhotoController {
 
         log.debug("User: {} deleting an image: {} from album: {}", userId, image, album);
 
-        return photoService.deleteImage(userId, album, image) ? ok("Image has been successfully removed.")
-                : new ResponseEntity<>("Image has not beed removed.", INTERNAL_SERVER_ERROR);
+        photoService.deleteImage(userId, album, image);
+
+        return ok("Image has been successfully removed.");
+    }
+
+    @RequestMapping(value = "/{userId}/album", method = DELETE)
+    public ResponseEntity<String> deleteAlbum(@PathVariable String userId,
+                                              @RequestParam String album) {
+        log.debug("User: {} deleting an album: {}", userId, album);
+
+        //TODO: provide a possibility to keep images
+        photoService.deleteAlbum(userId, album);
+
+        return ok("Album has been successfully removed.");
     }
 
     //TODO: create meta-data server for clustering

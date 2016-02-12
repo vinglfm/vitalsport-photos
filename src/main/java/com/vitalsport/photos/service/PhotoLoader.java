@@ -17,5 +17,7 @@ public interface PhotoLoader {
 
     void createAlbum(String userId, String album);
 
-    boolean deleteImage(String userId, String album, String image);
+    void deleteImage(String userId, String album, String image);
+
+    void deleteAlbum(String userId, String album);
 }
