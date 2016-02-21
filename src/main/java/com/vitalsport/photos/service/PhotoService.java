@@ -1,10 +1,12 @@
 package com.vitalsport.photos.service;
 
+import com.vitalsport.photos.io.ImageLoader;
 import com.vitalsport.photos.model.ImageHolder;
 import com.vitalsport.photos.validator.Validator;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -12,7 +14,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
-import java.nio.file.*;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.function.Function;
@@ -25,32 +30,41 @@ import static java.net.URLConnection.guessContentTypeFromName;
 public class PhotoService implements PhotoLoader {
 
     private String path;
-
+    private String defaultAlbum;
     private Validator validator;
+    private ImageLoader imageLoader;
 
     @Autowired
-    public PhotoService(@Value("${photos.path}") String path, Validator validator) {
+    public PhotoService(@Value("${photos.path}") String path,
+                        @Value("${photos.defaultAlbum}") String defaultAlbum,
+                        Validator validator,
+                        ImageLoader basicImageLoader) {
         this.path = path;
+        this.defaultAlbum = defaultAlbum;
         this.validator = validator;
+        this.imageLoader = basicImageLoader;
     }
 
     @Override
     public void uploadImage(String userId, String album, String fileName, MultipartFile multipartFile) {
 
+        validator.validate(StringUtils::isEmpty, userId, "userId is null or empty.");
+        validator.validate(StringUtils::isEmpty, fileName, "fileName is null or empty.");
         validator.validate(file -> file.isEmpty(), multipartFile, "Uploading an empty file.");
         validator.validate(file -> !file.getContentType().startsWith("image"), multipartFile,
                 format("ContentType: %s is not supported.", multipartFile.getContentType()));
 
-        File imageFile = createFile(userId, album, fileName);
-        try (OutputStream fileStream = new BufferedOutputStream(
-                new FileOutputStream(
-                        imageFile))) {
-            fileStream.write(multipartFile.getBytes());
-
+        String uploadingPath = preparePath(userId, retrieveAlbum(album), fileName);
+        try {
+            imageLoader.upload(uploadingPath, multipartFile.getBytes());
             log.debug("File: {} has been successfully uploaded.", fileName);
         } catch (IOException exception) {
             throw new InternalError(exception);
         }
+    }
+
+    private String retrieveAlbum(String album) {
+        return StringUtils.isEmpty(album) ? defaultAlbum : album;
     }
 
     @Override
@@ -83,7 +97,7 @@ public class PhotoService implements PhotoLoader {
         File file = new File(preparePath(userId, album, image));
         validator.validate(f -> !f.exists(), file,
                 format("Image: %s doesn't exists in album: %s.", image, album));
-        if(!file.delete()) {
+        if (!file.delete()) {
             throw new InternalError(format("Unable to delete image: %s", image));
         }
     }
@@ -132,13 +146,7 @@ public class PhotoService implements PhotoLoader {
         return photos;
     }
 
-    private File createFile(String userId, String album, String fileName) {
-        File file = new File(preparePath(userId, album, fileName));
-        file.getParentFile().mkdirs();
-        return file;
-    }
-
-    //TODO: refactor path creation
+    //TODO: refactor path creation, move to PathBuilder
     private String preparePath(String userId, String album, String fileName) {
         StringBuilder pathBuilder = new StringBuilder(path);
         pathBuilder.append(userId);
