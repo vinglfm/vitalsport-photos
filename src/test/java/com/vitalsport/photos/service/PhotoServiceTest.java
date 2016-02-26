@@ -1,6 +1,7 @@
 package com.vitalsport.photos.service;
 
-import com.vitalsport.photos.io.ImageLoader;
+import com.vitalsport.photos.io.ImageHandler;
+import com.vitalsport.photos.io.PathBuilder;
 import com.vitalsport.photos.validator.InputValidator;
 import org.junit.Before;
 import org.junit.Rule;
@@ -23,17 +24,17 @@ public class PhotoServiceTest {
     private static final String path = "imagePath/";
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
-    private ImageLoader imageLoader;
+    private ImageHandler imageHandler;
     private InputValidator inputValidator;
     private PhotoService photoService;
+    private PathBuilder pathBuilder;
 
     @Before
     public void setUp() {
-        imageLoader = mock(ImageLoader.class);
-
-        //TODO: think of mock variant
+        imageHandler = mock(ImageHandler.class);
         inputValidator = new InputValidator();
-        photoService = new PhotoService(path, defaultAlbum, inputValidator, imageLoader);
+        pathBuilder = new PathBuilder(path, defaultAlbum);
+        photoService = new PhotoService(pathBuilder, inputValidator, imageHandler);
     }
 
     @Test
@@ -109,7 +110,7 @@ public class PhotoServiceTest {
         when(multipartFile.getBytes()).thenReturn(expectedBytes);
 
         photoService.uploadImage(userId, imageAlbum, fileName, multipartFile);
-        verify(imageLoader, times(1)).upload(expectedPath, expectedBytes);
+        verify(imageHandler, times(1)).upload(expectedPath, expectedBytes);
     }
 
     @Test
@@ -125,7 +126,7 @@ public class PhotoServiceTest {
         when(multipartFile.getBytes()).thenReturn(expectedBytes);
 
         photoService.uploadImage(userId, album, fileName, multipartFile);
-        verify(imageLoader, times(1)).upload(expectedPath, expectedBytes);
+        verify(imageHandler, times(1)).upload(expectedPath, expectedBytes);
     }
 
     @Test
@@ -141,7 +142,7 @@ public class PhotoServiceTest {
         when(multipartFile.getBytes()).thenReturn(expectedBytes);
 
         photoService.uploadImage(userId, album, fileName, multipartFile);
-        verify(imageLoader, times(1)).upload(expectedPath, expectedBytes);
+        verify(imageHandler, times(1)).upload(expectedPath, expectedBytes);
     }
 
     private String preparePath(String userId, String album, String fileName) {

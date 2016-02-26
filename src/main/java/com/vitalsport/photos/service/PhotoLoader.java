@@ -9,7 +9,7 @@ import java.util.Collection;
 public interface PhotoLoader {
     void uploadImage(String userId, String album, String fileName, MultipartFile file);
 
-    ImageHolder downloadImage(String userId, String album, String fileName) throws IOException;
+    ImageHolder downloadImage(String userId, String album, String fileName);
 
     Collection<String> getUserAlbums(String userId);
 

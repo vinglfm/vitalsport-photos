@@ -52,7 +52,6 @@ public class PhotoController {
     public ResponseEntity<String> deleteImage(@PathVariable String userId,
                                               @RequestParam String album,
                                               @RequestParam String image) {
-
         log.debug("User: {} deleting an image: {} from album: {}", userId, image, album);
 
         photoService.deleteImage(userId, album, image);
