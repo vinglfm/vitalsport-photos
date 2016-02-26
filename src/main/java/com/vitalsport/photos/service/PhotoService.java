@@ -58,20 +58,11 @@ public class PhotoService implements PhotoLoader {
     }
 
     @Override
-    public void createAlbum(String userId, String album) {
-        File file = imageHandler.prepareFile(pathBuilder.getAlbumPath(userId, album));
-
-        validator.validate(f -> f.exists(), file,
-                format("Album: %s is already exists.", album));
-        try {
-            file.createNewFile();
-        } catch (IOException | SecurityException exception) {
-            throw new InternalError(exception);
-        }
-    }
-
-    @Override
     public ImageHolder downloadImage(String userId, String album, String image) {
+
+        validator.validate(StringUtils::isEmpty, userId, "userId is null or empty.");
+        validator.validate(StringUtils::isEmpty, album, "album is null or empty.");
+        validator.validate(StringUtils::isEmpty, image, "fileName is null or empty.");
 
         try {
             return imageHandler.download(pathBuilder.getImagePath(userId, album, image));
@@ -84,11 +75,25 @@ public class PhotoService implements PhotoLoader {
 
     @Override
     public void deleteImage(String userId, String album, String image) {
+
+        validator.validate(StringUtils::isEmpty, userId, "userId is null or empty.");
+        validator.validate(StringUtils::isEmpty, album, "album is null or empty.");
+        validator.validate(StringUtils::isEmpty, image, "fileName is null or empty.");
+
         File file = imageHandler.prepareFile(pathBuilder.getImagePath(userId, album, image));
-        validator.validate(f -> !f.exists(), file,
-                format("Image: %s doesn't exists in album: %s.", image, album));
-        if (!file.delete()) {
-            throw new InternalError(format("Unable to delete an image: %s", image));
+        file.deleteOnExit();
+    }
+
+    @Override
+    public void createAlbum(String userId, String album) {
+        File file = imageHandler.prepareFile(pathBuilder.getAlbumPath(userId, album));
+
+        validator.validate(f -> f.exists(), file,
+                format("Album: %s is already exists.", album));
+        try {
+            file.createNewFile();
+        } catch (IOException | SecurityException exception) {
+            throw new InternalError(exception);
         }
     }
 
