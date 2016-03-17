@@ -1,7 +1,7 @@
 package com.vitalsport.photos.service;
 
 import com.vitalsport.photos.io.ImageHandler;
-import com.vitalsport.photos.io.PathBuilder;
+import com.vitalsport.photos.builder.DirectoryPathBuilder;
 import com.vitalsport.photos.model.ImageHolder;
 import com.vitalsport.photos.validator.InputValidator;
 import org.junit.Before;
@@ -26,19 +26,21 @@ public class PhotoServiceTest {
 
     private static final String defaultAlbum = "default";
     private static final String path = "imagePath/";
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
+
     private ImageHandler imageHandler;
     private InputValidator inputValidator;
     private PhotoService photoService;
-    private PathBuilder pathBuilder;
+    private DirectoryPathBuilder directoryPathBuilder;
+
+    @Rule
+    public ExpectedException expectedException = ExpectedException.none();
 
     @Before
     public void setUp() {
         imageHandler = mock(ImageHandler.class);
         inputValidator = new InputValidator();
-        pathBuilder = new PathBuilder(path, defaultAlbum);
-        photoService = new PhotoService(pathBuilder, inputValidator, imageHandler);
+        directoryPathBuilder = new DirectoryPathBuilder(path, defaultAlbum);
+        photoService = new PhotoService(directoryPathBuilder, inputValidator, imageHandler);
     }
 
     @Test
@@ -106,7 +108,7 @@ public class PhotoServiceTest {
     public void uploadImageForValidInputData() throws IOException {
         String contentType = "image/png";
         byte[] expectedBytes = {1, 2, 3};
-        String expectedPath = pathBuilder.getImagePath(userId, imageAlbum, fileName);
+        String expectedPath = directoryPathBuilder.getImagePath(userId, imageAlbum, fileName);
 
         MultipartFile multipartFile = mock(MultipartFile.class);
         when(multipartFile.isEmpty()).thenReturn(false);
@@ -122,7 +124,7 @@ public class PhotoServiceTest {
         String contentType = "image/png";
         byte[] expectedBytes = {1, 2, 3};
         String album = null;
-        String expectedPath = pathBuilder.getImagePath(userId, defaultAlbum, fileName);
+        String expectedPath = directoryPathBuilder.getImagePath(userId, defaultAlbum, fileName);
 
         MultipartFile multipartFile = mock(MultipartFile.class);
         when(multipartFile.isEmpty()).thenReturn(false);
@@ -138,7 +140,7 @@ public class PhotoServiceTest {
         String contentType = "image/png";
         byte[] expectedBytes = {1, 2, 3};
         String album = "";
-        String expectedPath = pathBuilder.getImagePath(userId, defaultAlbum, fileName);
+        String expectedPath = directoryPathBuilder.getImagePath(userId, defaultAlbum, fileName);
 
         MultipartFile multipartFile = mock(MultipartFile.class);
         when(multipartFile.isEmpty()).thenReturn(false);
@@ -224,7 +226,7 @@ public class PhotoServiceTest {
 
     @Test
     public void downloadImageForValidInputData() throws IOException {
-        String pathToFile = pathBuilder.getImagePath(userId, imageAlbum, fileName);
+        String pathToFile = directoryPathBuilder.getImagePath(userId, imageAlbum, fileName);
         ImageHolder expectedResult = mock(ImageHolder.class);
         when(imageHandler.download(pathToFile)).thenReturn(expectedResult);
 
@@ -288,12 +290,12 @@ public class PhotoServiceTest {
 
     @Test
     public void deleteImageOnValidInputData() {
-        String pathToFile = pathBuilder.getImagePath(userId, imageAlbum, fileName);
+        String pathToFile = directoryPathBuilder.getImagePath(userId, imageAlbum, fileName);
         File file = mock(File.class);
         when(imageHandler.prepareFile(pathToFile)).thenReturn(file);
 
         photoService.deleteImage(userId, imageAlbum, fileName);
-        verify(file, times(1)).deleteOnExit();
+        verify(file, times(1)).delete();
     }
 
 }

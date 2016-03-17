@@ -8,6 +8,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -22,52 +23,52 @@ import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
 @Slf4j
 @Controller
+@CrossOrigin(origins = "*")
 public class PhotoController {
 
     @Autowired
     private PhotoService photoService;
 
     @RequestMapping(value = "/{userId}/upload", method = POST)
-    public ResponseEntity<String> uploadImage(@PathVariable String userId,
+    public ResponseEntity<?> uploadImage(@PathVariable String userId,
                                               @RequestParam String album,
                                               @RequestParam(value = "file") MultipartFile file) {
         log.debug("User: {} uploading photo: {}", userId, file.getOriginalFilename());
 
         photoService.uploadImage(userId, album, file.getOriginalFilename(), file);
-
-        return ok("Image has been downloaded successfully.");
+        return noContent().build();
     }
 
     @RequestMapping(value = "/{userId}/album", method = POST)
-    public ResponseEntity<String> createAlbum(@PathVariable String userId,
+    public ResponseEntity<?> createAlbum(@PathVariable String userId,
                                               @RequestParam String album) {
         log.debug("User: {} creating an album: {}", userId, album);
 
         photoService.createAlbum(userId, album);
 
-        return ok("Album has been successfully created.");
+        return noContent().build();
     }
 
     @RequestMapping(value = "/{userId}/image", method = DELETE)
-    public ResponseEntity<String> deleteImage(@PathVariable String userId,
+    public ResponseEntity<?> deleteImage(@PathVariable String userId,
                                               @RequestParam String album,
                                               @RequestParam String image) {
         log.debug("User: {} deleting an image: {} from album: {}", userId, image, album);
 
         photoService.deleteImage(userId, album, image);
 
-        return ok("Image has been successfully removed.");
+        return noContent().build();
     }
 
     @RequestMapping(value = "/{userId}/album", method = DELETE)
-    public ResponseEntity<String> deleteAlbum(@PathVariable String userId,
+    public ResponseEntity<?> deleteAlbum(@PathVariable String userId,
                                               @RequestParam String album) {
         log.debug("User: {} deleting an album: {}", userId, album);
 
         //TODO: provide a possibility to keep images
         photoService.deleteAlbum(userId, album);
 
-        return ok("Album has been successfully removed.");
+        return noContent().build();
     }
 
     //TODO: create meta-data server for clustering

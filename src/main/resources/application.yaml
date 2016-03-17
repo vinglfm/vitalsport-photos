@@ -1,6 +1,10 @@
 server:
-  contextPath: /vitalsport/photos
+  address: 127.0.0.1
   port: 8081
+  contextPath: /vitalsport/photos
+management:
+  port: 8082
+  address: 127.0.0.1
 vitalsport:
   secretKey: verySecretKey
 multipart:

@@ -1,4 +1,4 @@
-package com.vitalsport.photos.io;
+package com.vitalsport.photos.builder;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
-public class PathBuilder {
+public class DirectoryPathBuilder {
 
     private static final char DELIMITER = '/';
 
@@ -14,8 +14,8 @@ public class PathBuilder {
     private String defaultAlbum;
 
     @Autowired
-    public PathBuilder(@Value("${photos.path}") String path,
-                       @Value("${photos.defaultAlbum}") String defaultAlbum) {
+    public DirectoryPathBuilder(@Value("${photos.path}") String path,
+                                @Value("${photos.defaultAlbum}") String defaultAlbum) {
         this.path = path;
         this.defaultAlbum = defaultAlbum;
     }
