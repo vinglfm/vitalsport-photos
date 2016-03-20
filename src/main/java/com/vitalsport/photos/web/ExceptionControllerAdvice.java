@@ -28,7 +28,7 @@ public class ExceptionControllerAdvice {
     }
 
     private VndErrors.VndError prepareVndError(Throwable exception) {
-        String message = Optional.of(exception.getCause().getMessage()).orElse(exception.getClass().getSimpleName());
+        String message = Optional.ofNullable(exception.getCause()).map(Throwable::getMessage).orElse(exception.getClass().getSimpleName());
         return new VndErrors.VndError(exception.getLocalizedMessage(), message);
     }
 }
